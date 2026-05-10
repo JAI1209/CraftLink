@@ -3,6 +3,17 @@ const jwt = require("jsonwebtoken");
 
 const User = require("../models/User");
 
+// GENERATE JWT TOKEN
+const generateToken = (id) => {
+  return jwt.sign(
+    { id },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    }
+  );
+};
+
 // REGISTER USER
 const registerUser = async (
   req,
@@ -13,6 +24,7 @@ const registerUser = async (
       name,
       email,
       password,
+      avatar,
     } = req.body;
 
     // CHECK EXISTING USER
@@ -45,12 +57,21 @@ const registerUser = async (
         email,
         password:
           hashedPassword,
+        avatar,
       });
 
     res.status(201).json({
       message:
         "User registered successfully",
-      user,
+      token: generateToken(
+        user._id
+      ),
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -94,27 +115,39 @@ const loginUser = async (
       });
     }
 
-    // GENERATE JWT TOKEN
-    const token = jwt.sign(
-      {
-        id: user._id,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
-
+    // SUCCESS RESPONSE
     res.status(200).json({
       message:
         "Login successful",
-      token,
+      token: generateToken(
+        user._id
+      ),
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
+        avatar: user.avatar,
       },
     });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// GET CURRENT USER
+const getMe = async (
+  req,
+  res
+) => {
+  try {
+    const user =
+      await User.findById(
+        req.user.id
+      ).select("-password");
+
+    res.status(200).json(user);
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -125,4 +158,5 @@ const loginUser = async (
 module.exports = {
   registerUser,
   loginUser,
+  getMe,
 };

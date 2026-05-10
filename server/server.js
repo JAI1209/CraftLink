@@ -7,6 +7,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const skillRoutes = require("./routes/skillRoutes");
 
+
 const app = express();
 
 // CONNECT DATABASE

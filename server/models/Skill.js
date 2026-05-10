@@ -1,4 +1,5 @@
-const mongoose = require("mongoose");
+const mongoose =
+  require("mongoose");
 
 const skillSchema =
   new mongoose.Schema(
@@ -29,7 +30,9 @@ const skillSchema =
       },
 
       user: {
-        type: mongoose.Schema.Types.ObjectId,
+        type:
+          mongoose.Schema.Types
+            .ObjectId,
         ref: "User",
       },
     },
@@ -38,7 +41,8 @@ const skillSchema =
     }
   );
 
-module.exports = mongoose.model(
-  "Skill",
-  skillSchema
-);
+module.exports =
+  mongoose.model(
+    "Skill",
+    skillSchema
+  );

@@ -1,174 +1,289 @@
-import DashboardSidebar from "../components/DashboardSidebar";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import toast from "react-hot-toast";
+
+import API from "../services/api";
 
 const Dashboard = () => {
+  const [user, setUser] =
+    useState(null);
+
+  const [skills, setSkills] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  // FETCH DATA
+  useEffect(() => {
+    const fetchData =
+      async () => {
+        try {
+          const token =
+            localStorage.getItem(
+              "token"
+            );
+
+          // FETCH USER
+          const userRes =
+            await API.get(
+              "/auth/me",
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+          setUser(
+            userRes.data
+          );
+
+          // FETCH MY SKILLS
+          const skillsRes =
+            await API.get(
+              "/skills/my-skills",
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+          setSkills(
+            skillsRes.data
+          );
+        } catch (error) {
+          console.log(error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+    fetchData();
+  }, []);
+
+  // DELETE SKILL
+  const handleDelete =
+    async (id) => {
+      try {
+        const token =
+          localStorage.getItem(
+            "token"
+          );
+
+        await API.delete(
+          `/skills/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // UPDATE UI
+        setSkills(
+          skills.filter(
+            (skill) =>
+              skill._id !== id
+          )
+        );
+
+        toast.success(
+          "Skill deleted 🚀"
+        );
+      } catch (error) {
+        toast.error(
+          error.response?.data
+            ?.message ||
+            "Delete failed"
+        );
+      }
+    };
+
+  if (loading) {
+    return (
+      <section className="section">
+        <div className="container">
+          <h1>
+            Loading dashboard...
+          </h1>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="section">
       <div className="container">
+        {/* HEADER */}
+        <div
+          className="glass"
+          style={{
+            padding: "2rem",
+            marginBottom: "2rem",
+          }}
+        >
+          <h1
+            style={{
+              marginBottom: "1rem",
+            }}
+          >
+            Welcome back,{" "}
+            {user?.name} 👋
+          </h1>
+
+          <p>
+            Email: {user?.email}
+          </p>
+        </div>
+
+        {/* STATS */}
         <div
           style={{
             display: "grid",
             gridTemplateColumns:
-              "260px 1fr",
-            gap: "2rem",
-            alignItems: "start",
+              "repeat(auto-fit,minmax(220px,1fr))",
+            gap: "1.5rem",
+            marginBottom: "2rem",
           }}
         >
-          {/* SIDEBAR */}
-          <DashboardSidebar />
+          <div
+            className="glass"
+            style={{
+              padding: "2rem",
+            }}
+          >
+            <h2>
+              {skills.length}
+            </h2>
 
-          {/* MAIN CONTENT */}
-          <div>
-            {/* HEADER */}
-            <div
-              className="glass"
-              style={{
-                padding: "2rem",
-                marginBottom: "2rem",
-              }}
-            >
-              <h1
-                style={{
-                  marginBottom: ".7rem",
-                }}
-              >
-                Welcome Back, Jai 👋
-              </h1>
+            <p>
+              Active Skills
+            </p>
+          </div>
 
-              <p>
-                Manage your profile, skills, and
-                collaborations from one place.
-              </p>
-            </div>
+          <div
+            className="glass"
+            style={{
+              padding: "2rem",
+            }}
+          >
+            <h2>4.9★</h2>
 
-            {/* STATS */}
+            <p>
+              Profile Rating
+            </p>
+          </div>
+        </div>
+
+        {/* MY SKILLS */}
+        <div
+          className="glass"
+          style={{
+            padding: "2rem",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: "1.5rem",
+            }}
+          >
+            My Skills
+          </h2>
+
+          {skills.length > 0 ? (
             <div
               style={{
                 display: "grid",
                 gridTemplateColumns:
-                  "repeat(auto-fit,minmax(220px,1fr))",
-                gap: "1.5rem",
-                marginBottom: "2rem",
+                  "repeat(auto-fit,minmax(250px,1fr))",
+                gap: "1rem",
               }}
             >
-              {[
-                {
-                  title: "12",
-                  subtitle: "Active Skills",
-                },
-                {
-                  title: "48",
-                  subtitle: "Connections",
-                },
-                {
-                  title: "8",
-                  subtitle: "Pending Requests",
-                },
-                {
-                  title: "4.9★",
-                  subtitle: "Profile Rating",
-                },
-              ].map((item, index) => (
-                <div
-                  key={index}
-                  className="glass"
-                  style={{
-                    padding: "2rem",
-                  }}
-                >
-                  <h2
-                    style={{
-                      marginBottom: ".5rem",
-                      fontSize: "2rem",
-                    }}
-                  >
-                    {item.title}
-                  </h2>
-
-                  <p>{item.subtitle}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* QUICK ACTIONS */}
-            <div
-              className="glass"
-              style={{
-                padding: "2rem",
-                marginBottom: "2rem",
-              }}
-            >
-              <h2
-                style={{
-                  marginBottom: "1.5rem",
-                }}
-              >
-                Quick Actions
-              </h2>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: "1rem",
-                  flexWrap: "wrap",
-                }}
-              >
-                <button className="primary-btn">
-                  Add New Skill
-                </button>
-
-                <button className="secondary-btn">
-                  Edit Profile
-                </button>
-
-                <button className="secondary-btn">
-                  View Messages
-                </button>
-              </div>
-            </div>
-
-            {/* RECENT ACTIVITY */}
-            <div
-              className="glass"
-              style={{
-                padding: "2rem",
-              }}
-            >
-              <h2
-                style={{
-                  marginBottom: "1.5rem",
-                }}
-              >
-                Recent Activity
-              </h2>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "1rem",
-                }}
-              >
-                {[
-                  "New collaboration request received",
-                  "Your profile got 12 new views",
-                  "Frontend skill listing updated",
-                  "You received a new message",
-                ].map((activity, index) => (
+              {skills.map(
+                (skill) => (
                   <div
-                    key={index}
+                    key={
+                      skill._id
+                    }
                     style={{
-                      padding: "1rem",
-                      borderRadius: "14px",
+                      padding:
+                        "1.5rem",
+                      borderRadius:
+                        "16px",
                       background:
                         "rgba(255,255,255,0.03)",
                     }}
                   >
-                    {activity}
+                    <h3
+                      style={{
+                        marginBottom:
+                          ".7rem",
+                      }}
+                    >
+                      {
+                        skill.title
+                      }
+                    </h3>
+
+                    <p
+                      style={{
+                        marginBottom:
+                          ".5rem",
+                      }}
+                    >
+                      {
+                        skill.category
+                      }
+                    </p>
+
+                    <p
+                      style={{
+                        marginBottom:
+                          "1rem",
+                      }}
+                    >
+                      ₹
+                      {
+                        skill.price
+                      }
+                    </p>
+
+                    <small>
+                      {
+                        skill.description
+                      }
+                    </small>
+
+                    {/* DELETE BUTTON */}
+                    <button
+                      onClick={() =>
+                        handleDelete(
+                          skill._id
+                        )
+                      }
+                      className="secondary-btn"
+                      style={{
+                        marginTop:
+                          "1rem",
+                        width: "100%",
+                      }}
+                    >
+                      Delete Skill
+                    </button>
                   </div>
-                ))}
-              </div>
+                )
+              )}
             </div>
-          </div>
+          ) : (
+            <p>
+              No skills added yet.
+            </p>
+          )}
         </div>
       </div>
     </section>

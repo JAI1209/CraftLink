@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
 
+const User = require("../models/User");
+
 const protect = async (
   req,
   res,
@@ -7,7 +9,6 @@ const protect = async (
 ) => {
   let token;
 
-  // CHECK TOKEN
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith(
@@ -27,8 +28,11 @@ const protect = async (
         process.env.JWT_SECRET
       );
 
-      // SAVE USER ID
-      req.user = decoded.id;
+      // GET USER
+      req.user =
+        await User.findById(
+          decoded.id
+        ).select("-password");
 
       next();
     } catch (error) {

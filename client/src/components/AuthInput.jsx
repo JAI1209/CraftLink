@@ -2,6 +2,9 @@ const AuthInput = ({
   type,
   placeholder,
   label,
+  name,
+  value,
+  onChange,
 }) => {
   return (
     <div
@@ -21,7 +24,22 @@ const AuthInput = ({
 
       <input
         type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
         placeholder={placeholder}
+        style={{
+          width: "100%",
+          padding: "1rem",
+          borderRadius: "14px",
+          border:
+            "1px solid rgba(255,255,255,0.08)",
+          background:
+            "rgba(255,255,255,0.03)",
+          color: "white",
+          outline: "none",
+          fontSize: "1rem",
+        }}
       />
     </div>
   );

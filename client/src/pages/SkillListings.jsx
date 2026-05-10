@@ -1,20 +1,9 @@
 import {
-  useState,
   useEffect,
+  useState,
 } from "react";
 
-import axios from "axios";
-
-import SkillCard from "../components/SkillCard";
-import SkeletonCard from "../components/SkeletonCard";
-
-const categories = [
-  "All",
-  "Development",
-  "Design",
-  "Marketing",
-  "Editing",
-];
+import API from "../services/api";
 
 const SkillListings = () => {
   const [skills, setSkills] =
@@ -26,13 +15,8 @@ const SkillListings = () => {
   const [search, setSearch] =
     useState("");
 
-  const [
-    selectedCategory,
-    setSelectedCategory,
-  ] = useState("All");
-
-  const [sortBy, setSortBy] =
-    useState("default");
+  const [category, setCategory] =
+    useState("All");
 
   // FETCH SKILLS
   useEffect(() => {
@@ -40,8 +24,8 @@ const SkillListings = () => {
       async () => {
         try {
           const { data } =
-            await axios.get(
-              "http://localhost:5000/api/skills"
+            await API.get(
+              "/skills"
             );
 
           setSkills(data);
@@ -55,47 +39,44 @@ const SkillListings = () => {
     fetchSkills();
   }, []);
 
-  // FILTER + SORT
-  const filteredSkills = skills
-    .filter((skill) => {
+  // FILTER SKILLS
+  const filteredSkills =
+    skills.filter((skill) => {
       const matchesSearch =
         skill.title
           .toLowerCase()
-          .includes(search.toLowerCase()) ||
-        skill.category
-          .toLowerCase()
-          .includes(search.toLowerCase());
+          .includes(
+            search.toLowerCase()
+          );
 
       const matchesCategory =
-        selectedCategory === "All" ||
-        skill.category ===
-          selectedCategory;
+        category === "All"
+          ? true
+          : skill.category ===
+            category;
 
       return (
         matchesSearch &&
         matchesCategory
       );
-    })
-    .sort((a, b) => {
-      if (sortBy === "price-low") {
-        return a.price - b.price;
-      }
-
-      if (sortBy === "price-high") {
-        return b.price - a.price;
-      }
-
-      if (sortBy === "rating") {
-        return b.rating - a.rating;
-      }
-
-      return 0;
     });
+
+  if (loading) {
+    return (
+      <section className="section">
+        <div className="container">
+          <h1>
+            Loading skills...
+          </h1>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="section">
       <div className="container">
-        {/* HEADER */}
+        {/* PAGE TITLE */}
         <div
           style={{
             marginBottom: "3rem",
@@ -108,174 +89,197 @@ const SkillListings = () => {
               marginBottom: "1rem",
             }}
           >
-            Explore Skills
+            Explore Skills 🚀
           </h1>
 
           <p>
-            Discover talented freelancers and
-            creative professionals.
+            Discover talented
+            creators and services.
           </p>
-        </div>
-
-        {/* SEARCH */}
-        <div
-          className="glass"
-          style={{
-            padding: "1.5rem",
-            marginBottom: "2rem",
-          }}
-        >
-          <input
-            type="text"
-            placeholder="Search skills..."
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
-            style={{
-              width: "100%",
-              padding: "1rem",
-              borderRadius: "14px",
-              border:
-                "1px solid rgba(255,255,255,0.08)",
-              background:
-                "rgba(255,255,255,0.03)",
-              color: "white",
-            }}
-          />
         </div>
 
         {/* FILTERS */}
         <div
           style={{
             display: "flex",
-            justifyContent:
-              "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
             gap: "1rem",
             marginBottom: "2rem",
+            flexWrap: "wrap",
           }}
         >
-          {/* CATEGORY */}
-          <div
-            style={{
-              display: "flex",
-              gap: "1rem",
-              flexWrap: "wrap",
-            }}
-          >
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() =>
-                  setSelectedCategory(
-                    category
-                  )
-                }
-                className={
-                  selectedCategory ===
-                  category
-                    ? "primary-btn"
-                    : "secondary-btn"
-                }
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-
-          {/* SORT */}
-          <select
-            value={sortBy}
+          {/* SEARCH */}
+          <input
+            type="text"
+            placeholder="Search skills..."
+            value={search}
             onChange={(e) =>
-              setSortBy(e.target.value)
+              setSearch(
+                e.target.value
+              )
+            }
+            style={{
+              flex: 1,
+              minWidth: "250px",
+              padding: "1rem",
+              borderRadius:
+                "14px",
+              border:
+                "1px solid rgba(255,255,255,0.08)",
+              background:
+                "rgba(255,255,255,0.03)",
+              color: "white",
+              outline: "none",
+            }}
+          />
+
+          {/* CATEGORY */}
+          <select
+            value={category}
+            onChange={(e) =>
+              setCategory(
+                e.target.value
+              )
             }
             style={{
               padding: "1rem",
-              borderRadius: "14px",
-              background:
-                "rgba(255,255,255,0.04)",
-              color: "white",
+              borderRadius:
+                "14px",
               border:
                 "1px solid rgba(255,255,255,0.08)",
+              background:
+                "rgba(255,255,255,0.03)",
+              color: "white",
+              outline: "none",
             }}
           >
-            <option value="default">
-              Sort By
+            <option value="All">
+              All
             </option>
 
-            <option value="price-low">
-              Price: Low to High
+            <option value="Development">
+              Development
             </option>
 
-            <option value="price-high">
-              Price: High to Low
+            <option value="Design">
+              Design
             </option>
 
-            <option value="rating">
-              Highest Rated
+            <option value="Marketing">
+              Marketing
+            </option>
+
+            <option value="Editing">
+              Editing
             </option>
           </select>
         </div>
 
-        {/* RESULTS */}
-        <div
-          style={{
-            marginBottom: "2rem",
-          }}
-        >
-          <p>
-            Showing{" "}
-            <strong>
-              {filteredSkills.length}
-            </strong>{" "}
-            results
-          </p>
-        </div>
-
-        {/* GRID */}
+        {/* SKILLS GRID */}
         <div
           style={{
             display: "grid",
             gridTemplateColumns:
-              "repeat(auto-fit,minmax(300px,1fr))",
+              "repeat(auto-fit,minmax(280px,1fr))",
             gap: "1.5rem",
           }}
         >
-          {loading ? (
-            [...Array(6)].map(
-              (_, index) => (
-                <SkeletonCard
-                  key={index}
-                />
+          {filteredSkills.length >
+          0 ? (
+            filteredSkills.map(
+              (skill) => (
+                <div
+                  key={
+                    skill._id
+                  }
+                  className="glass"
+                  style={{
+                    padding:
+                      "1.5rem",
+                  }}
+                >
+                  {/* TITLE */}
+                  <h2
+                    style={{
+                      marginBottom:
+                        ".7rem",
+                    }}
+                  >
+                    {
+                      skill.title
+                    }
+                  </h2>
+
+                  {/* CATEGORY */}
+                  <p
+                    style={{
+                      marginBottom:
+                        ".5rem",
+                      color:
+                        "#a5b4fc",
+                    }}
+                  >
+                    {
+                      skill.category
+                    }
+                  </p>
+
+                  {/* DESCRIPTION */}
+                  <p
+                    style={{
+                      marginBottom:
+                        "1rem",
+                      lineHeight:
+                        "1.6",
+                    }}
+                  >
+                    {
+                      skill.description
+                    }
+                  </p>
+
+                  {/* PRICE */}
+                  <h3
+                    style={{
+                      marginBottom:
+                        "1rem",
+                    }}
+                  >
+                    ₹
+                    {
+                      skill.price
+                    }
+                  </h3>
+
+                  {/* USER */}
+                  <div
+                    style={{
+                      display:
+                        "flex",
+                      justifyContent:
+                        "space-between",
+                      alignItems:
+                        "center",
+                    }}
+                  >
+                    <small>
+                      By{" "}
+                      {
+                        skill.user
+                          ?.name
+                      }
+                    </small>
+
+                    <button className="primary-btn">
+                      Hire
+                    </button>
+                  </div>
+                </div>
               )
             )
-          ) : filteredSkills.length >
-            0 ? (
-            filteredSkills.map((skill) => (
-              <SkillCard
-                key={skill._id}
-                title={skill.title}
-                category={skill.category}
-                price={skill.price}
-                rating={skill.rating}
-                username={
-                  skill.user?.name ||
-                  "Unknown"
-                }
-              />
-            ))
           ) : (
-            <div
-              className="glass"
-              style={{
-                padding: "2rem",
-                textAlign: "center",
-              }}
-            >
-              No skills found.
-            </div>
+            <h2>
+              No skills found 😔
+            </h2>
           )}
         </div>
       </div>

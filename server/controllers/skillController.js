@@ -1,4 +1,5 @@
-const Skill = require("../models/Skill");
+const Skill =
+  require("../models/Skill");
 
 // CREATE SKILL
 const createSkill = async (
@@ -19,10 +20,12 @@ const createSkill = async (
         category,
         description,
         price,
-        user: req.user,
+        user: req.user._id,
       });
 
-    res.status(201).json(skill);
+    res.status(201).json(
+      skill
+    );
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -42,7 +45,73 @@ const getSkills = async (
         "name email"
       );
 
-    res.json(skills);
+    res.status(200).json(
+      skills
+    );
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// GET MY SKILLS
+const getMySkills = async (
+  req,
+  res
+) => {
+  try {
+    const skills =
+      await Skill.find({
+        user: req.user._id,
+      });
+
+    res.status(200).json(
+      skills
+    );
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// DELETE SKILL
+const deleteSkill = async (
+  req,
+  res
+) => {
+  try {
+    const skill =
+      await Skill.findById(
+        req.params.id
+      );
+
+    // CHECK SKILL EXISTS
+    if (!skill) {
+      return res.status(404).json({
+        message:
+          "Skill not found",
+      });
+    }
+
+    // CHECK OWNER
+    if (
+      skill.user.toString() !==
+      req.user._id.toString()
+    ) {
+      return res.status(401).json({
+        message:
+          "Not authorized",
+      });
+    }
+
+    await skill.deleteOne();
+
+    res.status(200).json({
+      message:
+        "Skill deleted successfully",
+    });
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -53,4 +122,6 @@ const getSkills = async (
 module.exports = {
   createSkill,
   getSkills,
+  getMySkills,
+  deleteSkill,
 };
