@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
 import AddSkill from "./pages/AddSkill";
+import EditSkill from "./pages/EditSkill";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -76,6 +77,15 @@ const App = () => {
           element={
             <ProtectedRoute>
               <AddSkill />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/edit-skill/:id"
+          element={
+            <ProtectedRoute>
+              <EditSkill />
             </ProtectedRoute>
           }
         />

@@ -3,11 +3,18 @@ import {
   useState,
 } from "react";
 
+import {
+  useNavigate,
+} from "react-router-dom";
+
 import toast from "react-hot-toast";
 
 import API from "../services/api";
 
 const Dashboard = () => {
+  const navigate =
+    useNavigate();
+
   const [user, setUser] =
     useState(null);
 
@@ -259,6 +266,25 @@ const Dashboard = () => {
                       }
                     </small>
 
+                    {/* EDIT BUTTON */}
+                    <button
+                      onClick={() =>
+                        navigate(
+                          `/edit-skill/${skill._id}`
+                        )
+                      }
+                      className="primary-btn"
+                      style={{
+                        marginTop:
+                          "1rem",
+                        width: "100%",
+                        marginBottom:
+                          ".7rem",
+                      }}
+                    >
+                      Edit Skill
+                    </button>
+
                     {/* DELETE BUTTON */}
                     <button
                       onClick={() =>
@@ -268,8 +294,6 @@ const Dashboard = () => {
                       }
                       className="secondary-btn"
                       style={{
-                        marginTop:
-                          "1rem",
                         width: "100%",
                       }}
                     >

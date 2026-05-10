@@ -5,6 +5,7 @@ const {
   getSkills,
   getMySkills,
   deleteSkill,
+  updateSkill,
 } = require(
   "../controllers/skillController"
 );
@@ -32,6 +33,13 @@ router.post(
   "/",
   protect,
   createSkill
+);
+
+// UPDATE SKILL
+router.put(
+  "/:id",
+  protect,
+  updateSkill
 );
 
 // DELETE SKILL
