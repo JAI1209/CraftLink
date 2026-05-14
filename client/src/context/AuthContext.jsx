@@ -1,7 +1,7 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   createContext,
   useContext,
-  useEffect,
   useState,
 } from "react";
 
@@ -12,28 +12,34 @@ export const AuthProvider = ({
   children,
 }) => {
   const [token, setToken] =
-    useState(null);
+    useState(() =>
+      localStorage.getItem("token")
+    );
 
-  // LOAD TOKEN
-  useEffect(() => {
-    const savedToken =
-      localStorage.getItem(
-        "token"
-      );
-
-    if (savedToken) {
-      setToken(savedToken);
-    }
-  }, []);
+  const [user, setUser] =
+    useState(() =>
+      JSON.parse(
+        localStorage.getItem("user") ||
+          "null"
+      )
+    );
 
   // LOGIN
-  const login = (newToken) => {
+  const login = (
+    newToken,
+    newUser
+  ) => {
     localStorage.setItem(
       "token",
       newToken
     );
+    localStorage.setItem(
+      "user",
+      JSON.stringify(newUser)
+    );
 
     setToken(newToken);
+    setUser(newUser);
   };
 
   // LOGOUT
@@ -41,14 +47,19 @@ export const AuthProvider = ({
     localStorage.removeItem(
       "token"
     );
+    localStorage.removeItem(
+      "user"
+    );
 
     setToken(null);
+    setUser(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
         token,
+        user,
         login,
         logout,
       }}

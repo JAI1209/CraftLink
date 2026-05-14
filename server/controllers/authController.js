@@ -155,8 +155,31 @@ const getMe = async (
   }
 };
 
+// GET SAVED SKILLS
+const getSavedSkills =
+  async (req, res) => {
+    try {
+      const user =
+        await User.findById(
+          req.user._id
+        ).populate(
+          "savedSkills"
+        );
+
+      res.status(200).json(
+        user.savedSkills
+      );
+    } catch (error) {
+      res.status(500).json({
+        message:
+          error.message,
+      });
+    }
+  };
+
 module.exports = {
   registerUser,
   loginUser,
   getMe,
+  getSavedSkills,
 };

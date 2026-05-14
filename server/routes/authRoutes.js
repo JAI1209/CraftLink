@@ -4,6 +4,7 @@ const {
   registerUser,
   loginUser,
   getMe,
+  getSavedSkills,
 } = require("../controllers/authController");
 
 const protect =
@@ -28,6 +29,13 @@ router.get(
   "/me",
   protect,
   getMe
+);
+
+// GET SAVED SKILLS
+router.get(
+  "/saved-skills",
+  protect,
+  getSavedSkills
 );
 
 module.exports = router;

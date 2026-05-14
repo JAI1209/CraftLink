@@ -1,237 +1,69 @@
 import { useState } from "react";
-import {
-  Link,
-  useNavigate,
-} from "react-router-dom";
-
-import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-
-import AuthInput from "../components/AuthInput";
-
-import background from "../assets/image/background.png";
-
+import { Zap } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import API from "../services/api";
 
 const Login = () => {
   const navigate = useNavigate();
-
   const { login } = useAuth();
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
 
-  const [formData, setFormData] =
-    useState({
-      email: "",
-      password: "",
-    });
-
-  // HANDLE INPUT CHANGE
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]:
-        e.target.value,
-    });
-  };
-
-  // HANDLE LOGIN
-  const handleSubmit = async (
-    e
-  ) => {
+  const handle = async (e) => {
     e.preventDefault();
-
+    if (!form.email || !form.password) return toast.error("Fill in all fields");
+    setLoading(true);
     try {
-      const { data } =
-        await axios.post(
-          "http://localhost:5000/api/auth/login",
-          formData
-        );
-
-      // SAVE TOKEN IN CONTEXT
-      login(data.token);
-
-      toast.success(
-        "Login successful 🚀"
-      );
-
-      // REDIRECT
+      const { data } = await API.post("/auth/login", form);
+      login(data.token, data.user);
+      toast.success("Welcome back!");
       navigate("/dashboard");
-    } catch (error) {
-      toast.error(
-        error.response?.data
-          ?.message ||
-          "Login failed"
-      );
-    }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Invalid credentials");
+    } finally { setLoading(false); }
   };
 
   return (
-    <section
-      className="section"
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+    <div style={{ minHeight:"90vh", display:"flex", alignItems:"center", justifyContent:"center", padding:"2rem" }}>
+      {/* BG glow */}
+      <div style={{ position:"fixed", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:600, height:600, background:"radial-gradient(circle,rgba(200,241,53,0.07) 0%,transparent 65%)", pointerEvents:"none", zIndex:0 }} />
 
-        backgroundImage: `
-          linear-gradient(
-            rgba(0,0,0,0.45),
-            rgba(0,0,0,0.45)
-          ),
-          url(${background})
-        `,
-
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      <div className="container">
-        <div
-          className="glass"
-          style={{
-            maxWidth: "500px",
-            margin: "0 auto",
-            padding: "3rem",
-            backdropFilter:
-              "blur(18px)",
-            border:
-              "1px solid rgba(255,255,255,0.08)",
-          }}
-        >
-          {/* HEADER */}
-          <div
-            style={{
-              textAlign: "center",
-              marginBottom: "2rem",
-            }}
-          >
-            <h1
-              style={{
-                marginBottom: ".7rem",
-                fontSize: "2.5rem",
-              }}
-            >
-              Welcome Back
-            </h1>
-
-            <p>
-              Login to continue your
-              journey on CraftLink.
-            </p>
-          </div>
-
-          {/* FORM */}
-          <form
-            onSubmit={handleSubmit}
-          >
-            <AuthInput
-              label="Email"
-              type="email"
-              name="email"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChange={handleChange}
-            />
-
-            <AuthInput
-              label="Password"
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              value={
-                formData.password
-              }
-              onChange={handleChange}
-            />
-
-            {/* OPTIONS */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent:
-                  "space-between",
-                alignItems: "center",
-                marginBottom: "1.5rem",
-                flexWrap: "wrap",
-                gap: ".7rem",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: ".5rem",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  style={{
-                    width: "16px",
-                    height: "16px",
-                  }}
-                />
-
-                <p
-                  style={{
-                    fontSize: ".92rem",
-                  }}
-                >
-                  Remember me
-                </p>
-              </div>
-
-              <span
-                style={{
-                  fontSize: ".92rem",
-                  color: "#7c8cff",
-                  cursor: "pointer",
-                }}
-              >
-                Forgot Password?
-              </span>
+      <div style={{ width:"100%", maxWidth:420, position:"relative", zIndex:1 }}>
+        {/* LOGO */}
+        <div style={{ textAlign:"center", marginBottom:"2.5rem" }}>
+          <Link to="/" style={{ display:"inline-flex", alignItems:"center", gap:"0.6rem", marginBottom:"2rem" }}>
+            <div style={{ width:36, height:36, borderRadius:"var(--r-sm)", background:"var(--lime)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <Zap size={18} strokeWidth={2.2} fill="#080808" style={{ color: "#080808" }} />
             </div>
+            <span style={{ fontFamily:"var(--font-display)", fontWeight:800, fontSize:"1.2rem" }}>CraftLink</span>
+          </Link>
+          <h2 style={{ marginBottom:"0.5rem" }}>Welcome back</h2>
+          <p style={{ color:"var(--muted)", fontSize:"0.9rem" }}>Sign in to your account</p>
+        </div>
 
-            {/* BUTTON */}
-            <button
-              type="submit"
-              className="primary-btn"
-              style={{
-                width: "100%",
-              }}
-            >
-              Login
+        <div className="glass" style={{ padding:"2.5rem" }}>
+          <form onSubmit={handle} style={{ display:"flex", flexDirection:"column", gap:"1rem" }}>
+            <div>
+              <label style={{ display:"block", fontSize:"0.8rem", fontFamily:"var(--font-mono)", color:"var(--muted)", marginBottom:"0.4rem", letterSpacing:"0.05em" }}>EMAIL</label>
+              <input type="email" value={form.email} onChange={e => setForm({...form, email:e.target.value})} placeholder="you@example.com" required />
+            </div>
+            <div>
+              <label style={{ display:"block", fontSize:"0.8rem", fontFamily:"var(--font-mono)", color:"var(--muted)", marginBottom:"0.4rem", letterSpacing:"0.05em" }}>PASSWORD</label>
+              <input type="password" value={form.password} onChange={e => setForm({...form, password:e.target.value})} placeholder="••••••••" required />
+            </div>
+            <button type="submit" className="primary-btn" disabled={loading} style={{ width:"100%", padding:"0.9rem", marginTop:"0.5rem", fontSize:"0.92rem", justifyContent:"center" }}>
+              {loading ? "Signing in..." : "Sign in →"}
             </button>
           </form>
-
-          {/* FOOTER */}
-          <div
-            style={{
-              marginTop: "2rem",
-              textAlign: "center",
-            }}
-          >
-            <p>
-              Don&apos;t have an
-              account?{" "}
-              <Link to="/register">
-                <span
-                  style={{
-                    color: "#7c8cff",
-                    fontWeight:
-                      "600",
-                    cursor:
-                      "pointer",
-                  }}
-                >
-                  Register
-                </span>
-              </Link>
-            </p>
-          </div>
+          <p style={{ textAlign:"center", marginTop:"1.5rem", fontSize:"0.85rem", color:"var(--muted)" }}>
+            No account?{" "}
+            <Link to="/register" style={{ color:"var(--lime)", fontWeight:600 }}>Create one →</Link>
+          </p>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 

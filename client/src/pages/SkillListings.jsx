@@ -1,286 +1,81 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
+import { useEffect, useMemo, useState } from "react";
 import API from "../services/api";
+import SkillCard from "../components/SkillCard";
+import SkeletonCard from "../components/SkeletonCard";
+
+const CATS = ["All","Development","Design","Marketing","Editing","UI/UX","Writing","Video","Music","Other"];
 
 const SkillListings = () => {
-  const [skills, setSkills] =
-    useState([]);
+  const [skills, setSkills]     = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [search, setSearch]     = useState("");
+  const [category, setCategory] = useState("All");
 
-  const [loading, setLoading] =
-    useState(true);
-
-  const [search, setSearch] =
-    useState("");
-
-  const [category, setCategory] =
-    useState("All");
-
-  // FETCH SKILLS
   useEffect(() => {
-    const fetchSkills =
-      async () => {
-        try {
-          const { data } =
-            await API.get(
-              "/skills"
-            );
-
-          setSkills(data);
-        } catch (error) {
-          console.log(error);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-    fetchSkills();
+    API.get("/skills", { params: { limit: 60 } })
+      .then(({ data }) => setSkills(data.skills || data))
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-  // FILTER SKILLS
-  const filteredSkills =
-    skills.filter((skill) => {
-      const matchesSearch =
-        skill.title
-          .toLowerCase()
-          .includes(
-            search.toLowerCase()
-          );
-
-      const matchesCategory =
-        category === "All"
-          ? true
-          : skill.category ===
-            category;
-
-      return (
-        matchesSearch &&
-        matchesCategory
-      );
-    });
-
-  if (loading) {
-    return (
-      <section className="section">
-        <div className="container">
-          <h1>
-            Loading skills...
-          </h1>
-        </div>
-      </section>
-    );
-  }
+  const filtered = useMemo(() => skills.filter(s => {
+    const q = search.toLowerCase();
+    const matchQ = !q || s.title.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q);
+    const matchC = category === "All" || s.category === category;
+    return matchQ && matchC;
+  }), [skills, search, category]);
 
   return (
     <section className="section">
       <div className="container">
-        {/* PAGE TITLE */}
-        <div
-          style={{
-            marginBottom: "3rem",
-            textAlign: "center",
-          }}
-        >
-          <h1
-            style={{
-              fontSize: "3rem",
-              marginBottom: "1rem",
-            }}
-          >
-            Explore Skills 🚀
-          </h1>
-
-          <p>
-            Discover talented
-            creators and services.
-          </p>
+        {/* PAGE HEADER */}
+        <div style={{ marginBottom:"2.5rem" }}>
+          <p style={{ fontFamily:"var(--font-mono)", fontSize:"0.75rem", color:"var(--muted)", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:"0.6rem" }}>Marketplace</p>
+          <h1 style={{ marginBottom:"0.8rem" }}>Explore Skills</h1>
+          <p>Browse {skills.length}+ listings from verified freelancers.</p>
         </div>
 
-        {/* FILTERS */}
-        <div
-          style={{
-            display: "flex",
-            gap: "1rem",
-            marginBottom: "2rem",
-            flexWrap: "wrap",
-          }}
-        >
-          {/* SEARCH */}
-          <input
-            type="text"
-            placeholder="Search skills..."
-            value={search}
-            onChange={(e) =>
-              setSearch(
-                e.target.value
-              )
-            }
-            style={{
-              flex: 1,
-              minWidth: "250px",
-              padding: "1rem",
-              borderRadius:
-                "14px",
-              border:
-                "1px solid rgba(255,255,255,0.08)",
-              background:
-                "rgba(255,255,255,0.03)",
-              color: "white",
-              outline: "none",
-            }}
-          />
-
-          {/* CATEGORY */}
-          <select
-            value={category}
-            onChange={(e) =>
-              setCategory(
-                e.target.value
-              )
-            }
-            style={{
-              padding: "1rem",
-              borderRadius:
-                "14px",
-              border:
-                "1px solid rgba(255,255,255,0.08)",
-              background:
-                "rgba(255,255,255,0.03)",
-              color: "white",
-              outline: "none",
-            }}
-          >
-            <option value="All">
-              All
-            </option>
-
-            <option value="Development">
-              Development
-            </option>
-
-            <option value="Design">
-              Design
-            </option>
-
-            <option value="Marketing">
-              Marketing
-            </option>
-
-            <option value="Editing">
-              Editing
-            </option>
-          </select>
+        {/* SEARCH */}
+        <div style={{ marginBottom:"1.5rem" }}>
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search skills, categories, keywords..." style={{ maxWidth:520, background:"var(--surface-2)" }} />
         </div>
 
-        {/* SKILLS GRID */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit,minmax(280px,1fr))",
-            gap: "1.5rem",
-          }}
-        >
-          {filteredSkills.length >
-          0 ? (
-            filteredSkills.map(
-              (skill) => (
-                <div
-                  key={
-                    skill._id
-                  }
-                  className="glass"
-                  style={{
-                    padding:
-                      "1.5rem",
-                  }}
-                >
-                  {/* TITLE */}
-                  <h2
-                    style={{
-                      marginBottom:
-                        ".7rem",
-                    }}
-                  >
-                    {
-                      skill.title
-                    }
-                  </h2>
+        {/* CATEGORY PILLS */}
+        <div style={{ display:"flex", flexWrap:"wrap", gap:"0.5rem", marginBottom:"2.5rem" }}>
+          {CATS.map(c => (
+            <button key={c} onClick={() => setCategory(c)} style={{
+              padding:"0.4rem 1.1rem", borderRadius:"var(--r-full)", cursor:"pointer",
+              fontFamily:"var(--font-mono)", fontSize:"0.75rem", letterSpacing:"0.04em",
+              border: category===c ? "1px solid rgba(200,241,53,0.4)" : "1px solid var(--border)",
+              background: category===c ? "var(--lime-dim)" : "transparent",
+              color: category===c ? "var(--lime)" : "var(--muted)",
+              transition:"all 0.15s",
+            }}>{c}</button>
+          ))}
+        </div>
 
-                  {/* CATEGORY */}
-                  <p
-                    style={{
-                      marginBottom:
-                        ".5rem",
-                      color:
-                        "#a5b4fc",
-                    }}
-                  >
-                    {
-                      skill.category
-                    }
-                  </p>
+        {/* RESULTS */}
+        <p style={{ fontFamily:"var(--font-mono)", fontSize:"0.75rem", color:"var(--muted)", marginBottom:"1.5rem", letterSpacing:"0.04em" }}>
+          {loading ? "Loading..." : `${filtered.length} results`}
+        </p>
 
-                  {/* DESCRIPTION */}
-                  <p
-                    style={{
-                      marginBottom:
-                        "1rem",
-                      lineHeight:
-                        "1.6",
-                    }}
-                  >
-                    {
-                      skill.description
-                    }
-                  </p>
-
-                  {/* PRICE */}
-                  <h3
-                    style={{
-                      marginBottom:
-                        "1rem",
-                    }}
-                  >
-                    ₹
-                    {
-                      skill.price
-                    }
-                  </h3>
-
-                  {/* USER */}
-                  <div
-                    style={{
-                      display:
-                        "flex",
-                      justifyContent:
-                        "space-between",
-                      alignItems:
-                        "center",
-                    }}
-                  >
-                    <small>
-                      By{" "}
-                      {
-                        skill.user
-                          ?.name
-                      }
-                    </small>
-
-                    <button className="primary-btn">
-                      Hire
-                    </button>
-                  </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))", gap:"1.2rem" }}>
+          {loading
+            ? Array(9).fill(0).map((_, i) => <SkeletonCard key={i} />)
+            : filtered.length > 0
+              ? filtered.map(s => (
+                  <SkillCard key={s._id} _id={s._id} title={s.title} category={s.category}
+                    description={s.description} price={s.price} rating={s.rating}
+                    username={s.user?.name || "Creator"} userId={s.user?._id} avatar={s.user?.avatar} />
+                ))
+              : (
+                <div style={{ gridColumn:"1/-1", textAlign:"center", padding:"5rem 0" }}>
+                  <p style={{ fontSize:"2rem", marginBottom:"1rem" }}>◻</p>
+                  <h3 style={{ marginBottom:"0.5rem" }}>No results found</h3>
+                  <p>Try a different search or category.</p>
                 </div>
               )
-            )
-          ) : (
-            <h2>
-              No skills found 😔
-            </h2>
-          )}
+          }
         </div>
       </div>
     </section>
