@@ -342,7 +342,7 @@ const messageBadgeStyle = {
 /* ─── LAYOUT ──────────────────────────────────────────────────────────────── */
 const MainLayout = ({ children }) => (
   <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-    <CursorTrail />
+    
     <Navbar />
     <main style={{ flex: 1, width: "100%" }}>{children}</main>
     <Footer />
