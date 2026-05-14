@@ -2,7 +2,7 @@ import { Link, NavLink } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useMessageUnread } from "../context/MessageUnreadContext";
-import CursorTrail from "../components/CursorTrail";
+//import CursorTrail from "../components/CursorTrail";
 import NotificationBell from "../components/NotificationBell";
 import ThemeToggle from "../components/ThemeToggle";
 
