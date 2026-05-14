@@ -11,23 +11,32 @@ const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 connectDB();
 
-app.use(cors({ origin: [CLIENT_URL, "http://127.0.0.1:5173"], credentials: true }));
-// FIX: default limit is 100kb — base64 avatar images are 2-5MB
+app.use(cors({
+  origin: [
+    CLIENT_URL,
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://craft-link-olive.vercel.app",
+    /\.vercel\.app$/
+  ],
+  credentials: true
+}));
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // ── ROUTES ────────────────────────────────────────────────────────────────────
-app.use("/api/auth",     require("./routes/authRoutes"));
-app.use("/api/skills",   require("./routes/skillRoutes"));
-app.use("/api/messages", require("./routes/messageRoutes"));
-app.use("/api/users",    require("./routes/userRoutes"));
-app.use("/api/requests", require("./routes/requestRoutes"));
-app.use("/api/reviews",  require("./routes/reviewRoutes"));
+app.use("/api/auth",          require("./routes/authRoutes"));
+app.use("/api/skills",        require("./routes/skillRoutes"));
+app.use("/api/messages",      require("./routes/messageRoutes"));
+app.use("/api/users",         require("./routes/userRoutes"));
+app.use("/api/requests",      require("./routes/requestRoutes"));
+app.use("/api/reviews",       require("./routes/reviewRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
-app.use("/api/notes", require("./routes/collabNoteRoutes"));
-app.use("/api/dashboard", require("./routes/dashboardRoutes"));
-app.use("/api/crowdfunding", require("./routes/crowdfundingRoutes"));
-app.use("/api/challenges", require("./routes/challengeRoutes"));
+app.use("/api/notes",         require("./routes/collabNoteRoutes"));
+app.use("/api/dashboard",     require("./routes/dashboardRoutes"));
+app.use("/api/crowdfunding",  require("./routes/crowdfundingRoutes"));
+app.use("/api/challenges",    require("./routes/challengeRoutes"));
 
 app.get("/", (req, res) => res.send("CraftLink API Running 🚀"));
 
@@ -35,7 +44,13 @@ app.get("/", (req, res) => res.send("CraftLink API Running 🚀"));
 const server = http.createServer(app);
 const io     = new Server(server, {
   cors: {
-    origin:      [CLIENT_URL, "http://127.0.0.1:5173"],
+    origin: [
+      CLIENT_URL,
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "https://craft-link-olive.vercel.app",
+      /\.vercel\.app$/
+    ],
     methods:     ["GET", "POST"],
     credentials: true,
   },
@@ -45,7 +60,6 @@ const io     = new Server(server, {
 let onlineUsers      = [];
 global.onlineUsers   = onlineUsers;
 global.io            = io;
-
 
 io.on("connection", (socket) => {
   // ── ADD USER ──────────────────────────────────────────────────────────────
@@ -82,9 +96,7 @@ io.on("connection", (socket) => {
     if (!noteId) return;
     socket.join(`note:${noteId}`);
     socket.to(`note:${noteId}`).emit("note:presence", {
-      noteId,
-      user,
-      status: "joined",
+      noteId, user, status: "joined",
     });
   });
 
@@ -92,28 +104,19 @@ io.on("connection", (socket) => {
     if (!noteId) return;
     socket.leave(`note:${noteId}`);
     socket.to(`note:${noteId}`).emit("note:presence", {
-      noteId,
-      user,
-      status: "left",
+      noteId, user, status: "left",
     });
   });
 
   socket.on("note:editing", ({ noteId, user, cursor }) => {
     if (!noteId) return;
-    socket.to(`note:${noteId}`).emit("note:editing", {
-      noteId,
-      user,
-      cursor,
-    });
+    socket.to(`note:${noteId}`).emit("note:editing", { noteId, user, cursor });
   });
 
   socket.on("note:draft", ({ noteId, user, content, title }) => {
     if (!noteId) return;
     socket.to(`note:${noteId}`).emit("note:draft", {
-      noteId,
-      user,
-      content,
-      title,
+      noteId, user, content, title,
       updatedAt: new Date().toISOString(),
     });
   });
