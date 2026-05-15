@@ -69,20 +69,25 @@ const Messages = () => {
   const user           = userRef.current;
   const inputRef       = useRef(null);
 
+  // FIX: handle both `id` and `_id` formats
   const nid = useCallback((v) => {
     if (!v) return "";
     if (typeof v === "string") return v;
     if (typeof v._id === "string") return v._id;
-    return v._id?.toString?.() ?? v.toString();
+    if (typeof v.id === "string") return v.id;
+    return v._id?.toString?.() ?? v.id?.toString?.() ?? v.toString();
   }, []);
+
+  // FIX: get user id handling both id and _id
+  const userId = user?._id || user?.id || "";
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
-    if (!user?._id) return;
-    const addUser = () => socket.emit("addUser", user._id);
+    if (!userId) return;
+    const addUser = () => socket.emit("addUser", userId);
     if (socket.connected) addUser();
     socket.on("connect", addUser);
     socket.on("getOnlineUsers", setOnlineUsers);
@@ -117,7 +122,7 @@ const Messages = () => {
       if (!conv) return;
       const belongsHere = conv.members.some((m) => nid(m._id || m) === data.senderId);
       if (!belongsHere) return;
-      if (data.senderId === nid(user?._id)) return;
+      if (data.senderId === userId) return;
       setMessages((prev) => [
         ...prev,
         {
@@ -138,7 +143,7 @@ const Messages = () => {
       socket.off("userTyping", handleTypingOn);
       socket.off("stopTyping", handleTypingOff);
     };
-  }, [nid]); // eslint-disable-line
+  }, [nid, userId]);
 
   const fetchMessages = useCallback(async (conversationId) => {
     if (!conversationId) return;
@@ -185,13 +190,13 @@ const Messages = () => {
     setIsTyping(false);
     fetchMessages(conv._id);
     setMobileShowChat(true);
-  }, [fetchMessages]);
+  }, [fetchMessages, nid]);
 
   const handleSend = useCallback(async () => {
     if (!text.trim() || !selectedConvRef.current) return;
     setSending(true);
     const conv      = selectedConvRef.current;
-    const myId      = nid(user?._id);
+    const myId      = userId;
     const otherUser = conv.members.find((m) => nid(m._id || m) !== myId);
     if (!otherUser) { setSending(false); return; }
     const receiverId = nid(otherUser._id || otherUser);
@@ -217,28 +222,29 @@ const Messages = () => {
     } finally {
       setSending(false);
     }
-  }, [text, nid]); // eslint-disable-line
+  }, [text, nid, userId]);
 
   const handleTypingInput = useCallback((e) => {
     setText(e.target.value);
     const conv = selectedConvRef.current;
     if (!conv) return;
-    const myId       = nid(user?._id);
+    const myId       = userId;
     const otherUser  = conv.members.find((m) => nid(m._id || m) !== myId);
+    if (!otherUser) return;
     const receiverId = nid(otherUser._id || otherUser);
     socket.emit("typing", { conversationId: conv._id, receiverId });
     clearTimeout(typingTimerRef.current);
     typingTimerRef.current = setTimeout(() => {
       socket.emit("stopTyping", { conversationId: conv._id, receiverId });
     }, 1500);
-  }, [nid]); // eslint-disable-line
+  }, [nid, userId]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   }, [handleSend]);
 
-  const isOnline = (userId) => onlineUsers.some((u) => nid(u.userId) === nid(userId));
-  const myId     = nid(user?._id);
+  const isOnline = (uid) => onlineUsers.some((u) => nid(u.userId) === nid(uid));
+  const myId     = userId;
 
   const filteredConversations = conversations.filter((conv) => {
     const other = conv.members.find((m) => nid(m._id || m) !== myId);
