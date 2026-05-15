@@ -11,6 +11,13 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { MessageUnreadProvider } from "./context/MessageUnreadContext";
 import { ThemeProvider } from "./context/ThemeContext";
 
+fetch("https://craftlink-ka01.onrender.com/");
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+
+
+
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>

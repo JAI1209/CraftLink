@@ -24,26 +24,25 @@ const logoStyles = `
   @keyframes logoGlowPulse {
     0%, 100% {
       box-shadow:
-        0 0 5px 1px rgba(180, 255, 0, 0.14),
-        0 0 12px 2px rgba(180, 255, 0, 0.06);
+        0 0 5px 1px rgba(180, 255, 0, 0.18),
+        0 0 14px 3px rgba(180, 255, 0, 0.07);
     }
     50% {
       box-shadow:
-        0 0 10px 2px rgba(180, 255, 0, 0.32),
-        0 0 22px 5px rgba(180, 255, 0, 0.12);
+        0 0 12px 3px rgba(180, 255, 0, 0.38),
+        0 0 28px 7px rgba(180, 255, 0, 0.14);
     }
   }
 
   @keyframes logoAurora {
-    0%   { opacity: 0.30; transform: scale(1)    rotate(0deg);   }
-    50%  { opacity: 0.48; transform: scale(1.06) rotate(180deg); }
-    100% { opacity: 0.30; transform: scale(1)    rotate(360deg); }
+    0%   { opacity: 0.28; transform: scale(1)    rotate(0deg);   }
+    50%  { opacity: 0.50; transform: scale(1.08) rotate(180deg); }
+    100% { opacity: 0.28; transform: scale(1)    rotate(360deg); }
   }
 
   @keyframes logoFloat {
-    0%   { transform: translateY(0px);    }
-    50%  { transform: translateY(-1.2px); }
-    100% { transform: translateY(0px);    }
+    0%, 100% { transform: translateY(0px);   }
+    50%      { transform: translateY(-2px);   }
   }
 
   @keyframes shimmer {
@@ -55,15 +54,15 @@ const logoStyles = `
     position: relative;
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.65rem;
     text-decoration: none;
     cursor: pointer;
   }
 
   .logo-icon-container {
     position: relative;
-    width: 34px;
-    height: 34px;
+    width: 42px;        /* ⬆ bumped from 34 → 42 */
+    height: 42px;
     flex-shrink: 0;
     animation: logoFloat 5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
   }
@@ -71,16 +70,16 @@ const logoStyles = `
   .logo-icon-container::before {
     content: "";
     position: absolute;
-    inset: -6px;
+    inset: -7px;
     border-radius: 50%;
     background: conic-gradient(
       from 0deg,
-      rgba(180, 255, 0, 0.5),
-      rgba(100, 220, 0, 0.2),
-      rgba(180, 255, 0, 0.5)
+      rgba(180, 255, 0, 0.55),
+      rgba(100, 220, 0, 0.18),
+      rgba(180, 255, 0, 0.55)
     );
     animation: logoAurora 7s linear infinite;
-    filter: blur(6px);
+    filter: blur(7px);
     z-index: 0;
   }
 
@@ -88,7 +87,7 @@ const logoStyles = `
     content: "";
     position: absolute;
     inset: -3px;
-    border-radius: 10px;
+    border-radius: 12px;
     animation: logoGlowPulse 4s ease-in-out infinite;
     z-index: 0;
   }
@@ -96,18 +95,19 @@ const logoStyles = `
   .logo-img {
     position: relative;
     z-index: 1;
-    width: 34px;
-    height: 34px;
-    object-fit: contain;
-    border-radius: 8px;
+    width: 42px;        /* ⬆ match container */
+    height: 42px;
+    object-fit: cover;  /* fills box, no gap */
+    border-radius: 10px;
     display: block;
+    flex-shrink: 0;
   }
 
   .logo-text {
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: 1.1rem;
-    letter-spacing: -0.03em;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
     color: var(--white);
     position: relative;
     z-index: 1;
@@ -122,7 +122,6 @@ const logoStyles = `
     animation: shimmer 1.2s linear forwards;
   }
 `;
-
 /* ─── NAVBAR ──────────────────────────────────────────────────────────────── */
 const Navbar = () => {
   const { token, logout } = useAuth();
