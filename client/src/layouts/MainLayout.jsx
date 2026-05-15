@@ -314,7 +314,7 @@ const Footer = () => (
       </div>
 
       <div style={{ borderTop: "1px solid var(--border)", paddingTop: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
-        <p style={{ fontSize: "0.8rem", color: "var(--muted)" }}>© 2026 CraftLink. Built for Internshala FSD Capstone.</p>
+        <p style={{ fontSize: "0.8rem", color: "var(--muted)" }}>© 2026 CraftLink. Built for Connect. Collaborate. Create.</p>
         <p style={{ fontSize: "0.75rem", color: "var(--subtle)", fontFamily: "var(--font-mono)" }}>v1.0.0</p>
       </div>
     </div>
