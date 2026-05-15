@@ -59,9 +59,7 @@ const Messages = () => {
   const [isTyping,             setIsTyping]             = useState(false);
   const [sending,              setSending]              = useState(false);
   const [search,               setSearch]               = useState("");
-  // FIX: mobileView tracks whether we're showing chat on mobile
-  // On desktop the sidebar is ALWAYS visible — this only affects mobile
-  const [mobileShowChat, setMobileShowChat] = useState(false);
+  const [mobileShowChat,       setMobileShowChat]       = useState(false);
 
   const navigate       = useNavigate();
   const messagesEndRef = useRef(null);
@@ -103,7 +101,7 @@ const Messages = () => {
       setConversations((prev) =>
         prev.map((c) => {
           const relevant = c.members.some(
-            (m) => nid(m) === data.senderId || nid(m) === data.receiverId
+            (m) => nid(m._id || m) === data.senderId || nid(m._id || m) === data.receiverId
           );
           const isSelected = conv && nid(conv._id) === nid(c._id);
           return relevant
@@ -117,7 +115,7 @@ const Messages = () => {
         })
       );
       if (!conv) return;
-      const belongsHere = conv.members.some((m) => nid(m) === data.senderId);
+      const belongsHere = conv.members.some((m) => nid(m._id || m) === data.senderId);
       if (!belongsHere) return;
       if (data.senderId === nid(user?._id)) return;
       setMessages((prev) => [
@@ -186,7 +184,7 @@ const Messages = () => {
     setMessages([]);
     setIsTyping(false);
     fetchMessages(conv._id);
-    setMobileShowChat(true); // only matters on mobile
+    setMobileShowChat(true);
   }, [fetchMessages]);
 
   const handleSend = useCallback(async () => {
@@ -194,9 +192,9 @@ const Messages = () => {
     setSending(true);
     const conv      = selectedConvRef.current;
     const myId      = nid(user?._id);
-    const otherUser = conv.members.find((m) => nid(m) !== myId);
+    const otherUser = conv.members.find((m) => nid(m._id || m) !== myId);
     if (!otherUser) { setSending(false); return; }
-    const receiverId = nid(otherUser);
+    const receiverId = nid(otherUser._id || otherUser);
     try {
       const { data } = await API.post(
         "/messages/send",
@@ -226,8 +224,8 @@ const Messages = () => {
     const conv = selectedConvRef.current;
     if (!conv) return;
     const myId       = nid(user?._id);
-    const otherUser  = conv.members.find((m) => nid(m) !== myId);
-    const receiverId = nid(otherUser);
+    const otherUser  = conv.members.find((m) => nid(m._id || m) !== myId);
+    const receiverId = nid(otherUser._id || otherUser);
     socket.emit("typing", { conversationId: conv._id, receiverId });
     clearTimeout(typingTimerRef.current);
     typingTimerRef.current = setTimeout(() => {
@@ -243,16 +241,15 @@ const Messages = () => {
   const myId     = nid(user?._id);
 
   const filteredConversations = conversations.filter((conv) => {
-    const other = conv.members.find((m) => nid(m) !== myId);
+    const other = conv.members.find((m) => nid(m._id || m) !== myId);
     if (!other) return false;
     return !search || (other.name || "").toLowerCase().includes(search.toLowerCase());
   });
 
   const selectedOther = selectedConversation
-    ? selectedConversation.members.find((m) => nid(m) !== myId)
+    ? selectedConversation.members.find((m) => nid(m._id || m) !== myId)
     : null;
 
-  /* ── Loading ──────────────────────────────────────────────── */
   if (loading) {
     return (
       <>
@@ -290,23 +287,12 @@ const Messages = () => {
     <>
       <style>{STYLES}</style>
       <div style={css.root}>
-
-        {/* ══ SIDEBAR ══════════════════════════════════════════
-            FIX: On desktop — always visible (no transform).
-            On mobile — hidden when chat is open, shown otherwise.
-        ═══════════════════════════════════════════════════════ */}
         <div
           className="msg-sidebar"
-          style={{
-            ...css.sidebar,
-            // mobile: slide out when chat is showing
-            // desktop: CSS overrides this to always show (see STYLES)
-          }}
+          style={css.sidebar}
           data-mobile-hidden={mobileShowChat ? "true" : "false"}
         >
-          {/* Header */}
           <div style={css.sidebarHeader}>
-            {/* Back to home */}
             <button
               onClick={() => navigate("/")}
               style={{
@@ -346,7 +332,6 @@ const Messages = () => {
             </div>
           </div>
 
-          {/* Conversation list */}
           <div style={css.convList}>
             {filteredConversations.length === 0 ? (
               <div style={css.emptyConvWrap}>
@@ -362,7 +347,7 @@ const Messages = () => {
               </div>
             ) : (
               filteredConversations.map((conv) => {
-                const other      = conv.members.find((m) => nid(m) !== myId);
+                const other      = conv.members.find((m) => nid(m._id || m) !== myId);
                 if (!other) return null;
                 const isSelected = selectedConversation?._id === conv._id;
                 const online     = isOnline(other._id);
@@ -402,10 +387,6 @@ const Messages = () => {
           </div>
         </div>
 
-        {/* ══ CHAT AREA ════════════════════════════════════════
-            FIX: On mobile — hidden when sidebar is showing.
-            On desktop — always visible alongside sidebar.
-        ═══════════════════════════════════════════════════════ */}
         <div
           className="msg-chat"
           style={css.chatArea}
@@ -423,9 +404,7 @@ const Messages = () => {
             </div>
           ) : (
             <>
-              {/* Chat header */}
               <div style={css.chatHeader}>
-                {/* FIX: Back button — visible on mobile, hidden on desktop */}
                 <button
                   className="mobile-back-btn"
                   onClick={() => setMobileShowChat(false)}
@@ -433,7 +412,6 @@ const Messages = () => {
                 >
                   ← Back
                 </button>
-
                 {selectedOther && (
                   <>
                     <div style={{ position: "relative", flexShrink: 0 }}>
@@ -460,7 +438,6 @@ const Messages = () => {
                 )}
               </div>
 
-              {/* Messages */}
               <div style={css.msgsArea}>
                 {msgsLoading ? (
                   [...Array(6)].map((_, i) => <MsgSkeleton key={i} right={i % 3 === 0} />)
@@ -522,7 +499,6 @@ const Messages = () => {
                     );
                   })
                 )}
-
                 {isTyping && selectedOther && (
                   <div style={{ display: "flex", alignItems: "flex-end", gap: 8, marginTop: 4 }}>
                     <img
@@ -538,7 +514,6 @@ const Messages = () => {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input */}
               <div style={css.inputArea}>
                 <input
                   ref={inputRef}
@@ -589,36 +564,25 @@ const css = {
     position: "relative",
   },
   sidebar: {
-    width: 310,
-    flexShrink: 0,
-    display: "flex",
-    flexDirection: "column",
+    width: 310, flexShrink: 0,
+    display: "flex", flexDirection: "column",
     borderRight: "1px solid var(--border-color)",
     background: "var(--bg-secondary)",
-    zIndex: 10,
-    transition: "transform 0.3s ease",
+    zIndex: 10, transition: "transform 0.3s ease",
   },
-  sidebarHeader: {
-    padding: "1.35rem 1.25rem 1.1rem",
-    borderBottom: "1px solid var(--border-color)",
-  },
+  sidebarHeader: { padding: "1.35rem 1.25rem 1.1rem", borderBottom: "1px solid var(--border-color)" },
   sidebarTitle: {
     fontSize: "1.4rem", fontWeight: 700,
-    fontFamily: "var(--font-display)",
-    marginBottom: "0.15rem",
+    fontFamily: "var(--font-display)", marginBottom: "0.15rem",
     color: "var(--text-primary)", lineHeight: 1.2,
   },
   sidebarSub: { fontSize: "0.78rem", color: "var(--text-secondary)", marginBottom: 0 },
   searchInput: {
-    width: "100%",
-    background: "rgba(255,245,230,0.04)",
-    border: "1px solid var(--border-color)",
-    color: "var(--text-primary)",
-    borderRadius: 12,
-    padding: "0.6rem 1rem 0.6rem 2.2rem",
+    width: "100%", background: "rgba(255,245,230,0.04)",
+    border: "1px solid var(--border-color)", color: "var(--text-primary)",
+    borderRadius: 12, padding: "0.6rem 1rem 0.6rem 2.2rem",
     fontSize: "0.83rem", outline: "none",
-    transition: "var(--transition)",
-    fontFamily: "var(--font-body)",
+    transition: "var(--transition)", fontFamily: "var(--font-body)",
   },
   convList: { flex: 1, overflowY: "auto", paddingBottom: "0.5rem" },
   convItem: (selected) => ({
@@ -661,27 +625,15 @@ const css = {
     borderRadius: 999, padding: "0.28rem 0.65rem", flexShrink: 0,
   },
   unreadBadge: {
-    minWidth: 20,
-    height: 20,
-    padding: "0 0.4rem",
-    borderRadius: 999,
-    background: "var(--lime)",
-    color: "var(--ink)",
-    fontSize: "0.7rem",
-    fontWeight: 900,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
+    minWidth: 20, height: 20, padding: "0 0.4rem",
+    borderRadius: 999, background: "var(--lime)", color: "var(--ink)",
+    fontSize: "0.7rem", fontWeight: 900,
+    display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
-  chatArea: {
-    flex: 1, display: "flex", flexDirection: "column",
-    minWidth: 0, background: "var(--bg-primary)",
-  },
+  chatArea: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0, background: "var(--bg-primary)" },
   chatHeader: {
     display: "flex", alignItems: "center", gap: "0.85rem",
-    padding: "1rem 1.4rem",
-    borderBottom: "1px solid var(--border-color)",
+    padding: "1rem 1.4rem", borderBottom: "1px solid var(--border-color)",
     background: "var(--bg-secondary)", flexShrink: 0,
   },
   chatHeaderName: {
@@ -690,27 +642,21 @@ const css = {
     fontFamily: "var(--font-display)",
   },
   msgsArea: {
-    flex: 1, overflowY: "auto",
-    padding: "1.25rem 1.5rem",
+    flex: 1, overflowY: "auto", padding: "1.25rem 1.5rem",
     display: "flex", flexDirection: "column", gap: "0.2rem",
   },
   inputArea: {
-    flexShrink: 0,
-    padding: "0.9rem 1.25rem",
+    flexShrink: 0, padding: "0.9rem 1.25rem",
     borderTop: "1px solid var(--border-color)",
     background: "var(--bg-secondary)",
     display: "flex", gap: "0.7rem", alignItems: "center",
   },
   inputField: {
-    flex: 1,
-    background: "rgba(255,245,230,0.04)",
-    border: "1px solid var(--border-color)",
-    borderRadius: 14,
-    padding: "0.7rem 1.1rem",
-    color: "var(--text-primary)",
+    flex: 1, background: "rgba(255,245,230,0.04)",
+    border: "1px solid var(--border-color)", borderRadius: 14,
+    padding: "0.7rem 1.1rem", color: "var(--text-primary)",
     fontSize: "0.87rem", outline: "none",
-    fontFamily: "var(--font-body)",
-    lineHeight: 1.5, transition: "var(--transition)",
+    fontFamily: "var(--font-body)", lineHeight: 1.5, transition: "var(--transition)",
   },
   emptyChat: {
     flex: 1, display: "flex", flexDirection: "column",
@@ -718,8 +664,7 @@ const css = {
   },
   emptyChatIcon: {
     width: 80, height: 80, borderRadius: "50%",
-    background: "rgba(200,116,42,0.08)",
-    border: "1px solid var(--border-color)",
+    background: "rgba(200,116,42,0.08)", border: "1px solid var(--border-color)",
     display: "flex", alignItems: "center", justifyContent: "center",
     fontSize: "2rem", marginBottom: "0.4rem",
   },
@@ -727,20 +672,13 @@ const css = {
     padding: "3rem 1.5rem", textAlign: "center",
     display: "flex", flexDirection: "column", alignItems: "center", gap: "0.7rem",
   },
-  // Back button — hidden by default, shown only on mobile via CSS
   mobileBackBtn: {
-    display: "none",
-    background: "rgba(255,245,230,0.06)",
-    border: "1px solid var(--border-color)",
-    borderRadius: 10,
-    color: "var(--text-primary)",
-    padding: "0.38rem 0.8rem",
-    cursor: "pointer",
-    fontSize: "0.82rem",
-    alignItems: "center",
-    gap: 5,
-    fontFamily: "var(--font-body)",
-    flexShrink: 0,
+    display: "none", background: "rgba(255,245,230,0.06)",
+    border: "1px solid var(--border-color)", borderRadius: 10,
+    color: "var(--text-primary)", padding: "0.38rem 0.8rem",
+    cursor: "pointer", fontSize: "0.82rem",
+    alignItems: "center", gap: 5,
+    fontFamily: "var(--font-body)", flexShrink: 0,
   },
 };
 
@@ -779,22 +717,16 @@ const STYLES = `
   .bubble-me:hover { transform: scale(1.015); }
   .bubble-them { transition: transform 0.15s ease; }
 
-  /* ── DESKTOP: sidebar always visible, back btn hidden ── */
   @media (min-width: 769px) {
     .msg-sidebar {
       transform: translateX(0) !important;
       position: relative !important;
       width: 310px !important;
     }
-    .msg-chat {
-      display: flex !important;
-    }
-    .mobile-back-btn {
-      display: none !important;
-    }
+    .msg-chat { display: flex !important; }
+    .mobile-back-btn { display: none !important; }
   }
 
-  /* ── MOBILE: full-screen switch between sidebar and chat ── */
   @media (max-width: 768px) {
     .msg-sidebar {
       position: absolute !important;
@@ -802,18 +734,10 @@ const STYLES = `
       width: 100% !important;
       z-index: 50;
     }
-    .msg-sidebar[data-mobile-hidden="true"] {
-      transform: translateX(-100%) !important;
-    }
-    .msg-sidebar[data-mobile-hidden="false"] {
-      transform: translateX(0) !important;
-    }
-    .msg-chat[data-mobile-hidden="true"] {
-      display: none !important;
-    }
-    .mobile-back-btn {
-      display: flex !important;
-    }
+    .msg-sidebar[data-mobile-hidden="true"] { transform: translateX(-100%) !important; }
+    .msg-sidebar[data-mobile-hidden="false"] { transform: translateX(0) !important; }
+    .msg-chat[data-mobile-hidden="true"] { display: none !important; }
+    .mobile-back-btn { display: flex !important; }
   }
 `;
 
